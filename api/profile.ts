@@ -5,4 +5,22 @@ const getProfile = async () => {
   return response.data;
 };
 
-export { getProfile };
+const updateProfileImage = async (imageUri: string) => {
+  const formData = new FormData();
+
+  formData.append("image", {
+    uri: imageUri,
+    name: "profile.jpg",
+    type: "image/jpeg",
+  } as any);
+
+  const response = await instance.put("/api/auth/profile", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+};
+
+export { getProfile, updateProfileImage };

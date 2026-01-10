@@ -1,0 +1,25 @@
+{
+  "monster": [
+    { "type": "DEPOSIT", "amount": 10000 },
+    { "type": "DEPOSIT", "amount": 3000 },
+    { "type": "WITHDRAW", "amount": 1000 }
+  ],
+  "love": [
+    { "type": "DEPOSIT", "amount": 6000 },
+    { "type": "DEPOSIT", "amount": 3500 },
+    { "type": "WITHDRAW", "amount": 400 }
+  ],
+  "happiness": [
+    { "type": "DEPOSIT", "amount": 5000 },
+    { "type": "DEPOSIT", "amount": 3000 },
+    { "type": "WITHDRAW", "amount": 800 }
+  ],
+  "hope": [
+    { "type": "DEPOSIT", "amount": 4000 },
+    { "type": "DEPOSIT", "amount": 2500 }
+  ],
+  "serenity": [
+    { "type": "DEPOSIT", "amount": 7000 },
+    { "type": "WITHDRAW", "amount": 200 }
+  ]
+}

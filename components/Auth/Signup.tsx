@@ -7,6 +7,8 @@ import {
   StyleSheet,
   Image,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Link, router } from "expo-router";
 import AuthContext from "@/context/AuthContext";
@@ -64,7 +66,7 @@ const SignupScreen = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images", "videos"],
         allowsEditing: true,
-        aspect: [4, 3],
+        aspect: [9, 16],
         quality: 0.5,
       });
 
@@ -137,76 +139,82 @@ const SignupScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Your Labubu 🧸</Text>
-      <Text style={styles.subtitle}>Join the Labubu Bank</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={100}
+      style={styles.container}
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Create Your Labubu 🧸</Text>
+        <Text style={styles.subtitle}>Join the Labubu Bank</Text>
 
-      <View style={styles.avatarContainer}>
-        <Pressable onPress={handlePickImage} style={styles.avatarButton}>
-          {labubuInfo.image?.uri ? (
-            <Image
-              source={{ uri: labubuInfo.image.uri }}
-              style={styles.avatar}
-            />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarPlaceholderText}>+</Text>
-              <Text style={styles.avatarPlaceholderSubtext}>Add Photo</Text>
-            </View>
-          )}
+        <View style={styles.avatarContainer}>
+          <Pressable onPress={handlePickImage} style={styles.avatarButton}>
+            {labubuInfo.image?.uri ? (
+              <Image
+                source={{ uri: labubuInfo.image.uri }}
+                style={styles.avatar}
+              />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarPlaceholderText}>+</Text>
+                <Text style={styles.avatarPlaceholderSubtext}>Add Photo</Text>
+              </View>
+            )}
+          </Pressable>
+        </View>
+
+        <TextInput
+          placeholder="Display Name"
+          value={labubuInfo.displayname}
+          onChangeText={(text) =>
+            setLabubuInfo({ ...labubuInfo, displayname: text })
+          }
+          style={styles.input}
+          autoCapitalize="none"
+        />
+
+        <TextInput
+          placeholder="Username"
+          value={labubuInfo.username}
+          onChangeText={(text) =>
+            setLabubuInfo({ ...labubuInfo, username: text })
+          }
+          style={styles.input}
+          autoCapitalize="none"
+        />
+
+        <TextInput
+          placeholder="Password"
+          value={labubuInfo.password}
+          onChangeText={(text) =>
+            setLabubuInfo({ ...labubuInfo, password: text })
+          }
+          style={styles.input}
+          secureTextEntry
+        />
+
+        {isError && <Text style={styles.error}>Something went wrong</Text>}
+
+        <Pressable
+          style={[styles.button, isPending && styles.disabled]}
+          onPress={handleSignUp}
+          disabled={isPending}
+        >
+          <Text style={styles.buttonText}>
+            {isPending ? "Creating Your Labubu..." : "Sign Up"}
+          </Text>
         </Pressable>
+
+        {/* Signin link */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have a Labubu?</Text>
+          <Link href="/(auth)/signin" style={styles.link}>
+            Sign In
+          </Link>
+        </View>
       </View>
-
-      <TextInput
-        placeholder="Display Name"
-        value={labubuInfo.displayname}
-        onChangeText={(text) =>
-          setLabubuInfo({ ...labubuInfo, displayname: text })
-        }
-        style={styles.input}
-        autoCapitalize="none"
-      />
-
-      <TextInput
-        placeholder="Username"
-        value={labubuInfo.username}
-        onChangeText={(text) =>
-          setLabubuInfo({ ...labubuInfo, username: text })
-        }
-        style={styles.input}
-        autoCapitalize="none"
-      />
-
-      <TextInput
-        placeholder="Password"
-        value={labubuInfo.password}
-        onChangeText={(text) =>
-          setLabubuInfo({ ...labubuInfo, password: text })
-        }
-        style={styles.input}
-        secureTextEntry
-      />
-
-      {isError && <Text style={styles.error}>Something went wrong</Text>}
-
-      <Pressable
-        style={[styles.button, isPending && styles.disabled]}
-        onPress={handleSignUp}
-        disabled={isPending}
-      >
-        <Text style={styles.buttonText}>
-          {isPending ? "Creating Your Labubu..." : "Sign Up"}
-        </Text>
-      </Pressable>
-
-      {/* Signin link */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Already have a Labubu?</Text>
-        <Link href="/(auth)/signin" style={styles.link}>
-          Sign In
-        </Link>
-      </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 

@@ -1,4 +1,12 @@
-import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useState, useContext } from "react";
 import { Link, useRouter } from "expo-router";
 import { useMutation } from "@tanstack/react-query";
@@ -34,52 +42,58 @@ const SignInScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back 🧸</Text>
-      <Text style={styles.subtitle}>Sign in to your Labubu</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={100}
+      style={styles.container}
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Welcome Back 🧸</Text>
+        <Text style={styles.subtitle}>Sign in to your Labubu</Text>
 
-      <TextInput
-        placeholder="Username"
-        value={labubuCredentials.username}
-        onChangeText={(text) =>
-          setLabubuCredentials({ ...labubuCredentials, username: text })
-        }
-        style={styles.input}
-        autoCapitalize="none"
-        editable={!isPending}
-      />
+        <TextInput
+          placeholder="Username"
+          value={labubuCredentials.username}
+          onChangeText={(text) =>
+            setLabubuCredentials({ ...labubuCredentials, username: text })
+          }
+          style={styles.input}
+          autoCapitalize="none"
+          editable={!isPending}
+        />
 
-      <TextInput
-        placeholder="Password"
-        value={labubuCredentials.password}
-        onChangeText={(text) =>
-          setLabubuCredentials({ ...labubuCredentials, password: text })
-        }
-        style={styles.input}
-        secureTextEntry
-        editable={!isPending}
-      />
+        <TextInput
+          placeholder="Password"
+          value={labubuCredentials.password}
+          onChangeText={(text) =>
+            setLabubuCredentials({ ...labubuCredentials, password: text })
+          }
+          style={styles.input}
+          secureTextEntry
+          editable={!isPending}
+        />
 
-      {isError && <Text style={styles.error}>Something went wrong</Text>}
+        {isError && <Text style={styles.error}>Something went wrong</Text>}
 
-      <Pressable
-        style={[styles.button, isPending && styles.disabled]}
-        onPress={handleSignIn}
-        disabled={isPending}
-      >
-        <Text style={styles.buttonText}>
-          {isPending ? "Signing in..." : "Sign In"}
-        </Text>
-      </Pressable>
+        <Pressable
+          style={[styles.button, isPending && styles.disabled]}
+          onPress={handleSignIn}
+          disabled={isPending}
+        >
+          <Text style={styles.buttonText}>
+            {isPending ? "Signing in..." : "Sign In"}
+          </Text>
+        </Pressable>
 
-      {/* Signup link */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Don’t have a Labubu Account?</Text>
-        <Link href="/(auth)/signup" style={styles.link}>
-          Create one
-        </Link>
+        {/* Signup link */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Don’t have a Labubu Account?</Text>
+          <Link href="/(auth)/signup" style={styles.link}>
+            Create one
+          </Link>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
