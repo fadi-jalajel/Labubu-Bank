@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useContext } from "react";
 import {
   View,
   Text,
@@ -8,15 +8,13 @@ import {
   Image,
   Alert,
 } from "react-native";
-import { useState, useContext } from "react";
-import { Link, useRouter } from "expo-router";
+import { Link, router } from "expo-router";
 import AuthContext from "@/context/AuthContext";
 import { LabubuInfo } from "./types";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation } from "@tanstack/react-query";
 import { signup } from "@/api/auth";
 import { storeToken } from "@/api/storage";
-import { router } from "expo-router";
 
 const SignupScreen = () => {
   //Initializing state to capture user sign up input
@@ -26,40 +24,63 @@ const SignupScreen = () => {
     displayname: "",
     image: null,
   });
+  //Tracking Loading Status for image picking
+  const [isLoading, setIsLoading] = useState(false);
 
   //global user authentication state
   const { setIsAuthenticated } = useContext(AuthContext);
 
   // later you will replace this with image picker
-  const DEFAULT_IMAGE = "https://placehold.co/300x300/png?text=Labubu";
+  //   const DEFAULT_IMAGE = "https://placehold.co/300x300/png?text=Labubu";
 
-  //sconst router = useRouter();
+  const requestPermission = async () => {
+    const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-  const pickImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permissionResult.granted) {
+    if (!granted) {
       Alert.alert(
         "Permission required",
-        "Permission to access the media library is required."
+        "We need access to your photos so you can pick an image."
       );
+      return false;
+    }
+
+    return true;
+  };
+
+  const handlePickImage = async () => {
+    const hasPermission = await requestPermission();
+
+    if (!hasPermission) {
+      //   Alert.alert(
+      //     "Permission required",
+      //     "Permission to access the media library is required."
+      //   );
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.5,
-    });
+    try {
+      setIsLoading(true);
 
-    if (!result.canceled) {
-      setLabubuInfo({ ...labubuInfo, image: result });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images", "videos"],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const pickedAsset = result.assets[0];
+        setLabubuInfo({ ...labubuInfo, image: pickedAsset });
+      }
+    } catch (error) {
+      console.log("Error picking image:", error);
+      Alert.alert("Something went wrong", "Could not pick the image.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const { mutate, isError, error, data, isPending } = useMutation({
+  const { mutate, isError, isPending } = useMutation({
     mutationKey: ["signup"],
     mutationFn: signup,
     onSuccess: (data) => {
@@ -84,12 +105,32 @@ const SignupScreen = () => {
     formData.append("username", composedUsername);
     formData.append("password", labubuInfo.password);
 
-    if (profileImage && profileImage.assets && profileImage.assets.length > 0) {
+    if (profileImage) {
+      const mimeType = profileImage.mimeType ?? "image/jpeg";
+      const extension = mimeType.split("/")[1];
+
+      // Normalize URI for React Native (ensure file:// prefix if local file)
+      let imageUri = profileImage.uri;
+      if (
+        imageUri &&
+        !imageUri.startsWith("http") &&
+        !imageUri.startsWith("file://")
+      ) {
+        imageUri = `file://${imageUri}`;
+      }
+
       formData.append("image", {
-        uri: profileImage.assets[0].uri,
-        name: profileImage.assets[0].fileName || "profile.jpg",
-        type: profileImage.assets[0].type || "image/jpeg",
+        uri: imageUri,
+        name: profileImage.fileName ?? `profile.${extension}`,
+        type: mimeType,
       } as any);
+    }
+
+    // Debug logging
+    console.log("FormData username:", composedUsername);
+    console.log("FormData has image:", !!profileImage);
+    if (profileImage) {
+      console.log("Image URI:", profileImage.uri);
     }
 
     mutate(formData);
@@ -101,10 +142,10 @@ const SignupScreen = () => {
       <Text style={styles.subtitle}>Join the Labubu Bank</Text>
 
       <View style={styles.avatarContainer}>
-        <Pressable onPress={pickImage} style={styles.avatarButton}>
-          {labubuInfo.image?.assets?.[0]?.uri ? (
+        <Pressable onPress={handlePickImage} style={styles.avatarButton}>
+          {labubuInfo.image?.uri ? (
             <Image
-              source={{ uri: labubuInfo.image.assets[0].uri }}
+              source={{ uri: labubuInfo.image.uri }}
               style={styles.avatar}
             />
           ) : (

@@ -25,6 +25,7 @@ const SignInScreen = () => {
         username: "",
         password: "",
       });
+      router.navigate("/(protected)/(tabs)/home");
     },
   });
 
@@ -61,7 +62,11 @@ const SignInScreen = () => {
 
       {isError && <Text style={styles.error}>Something went wrong</Text>}
 
-      <Pressable style={styles.button} onPress={handleSignIn}>
+      <Pressable
+        style={[styles.button, isPending && styles.disabled]}
+        onPress={handleSignIn}
+        disabled={isPending}
+      >
         <Text style={styles.buttonText}>
           {isPending ? "Signing in..." : "Sign In"}
         </Text>
@@ -135,5 +140,8 @@ const styles = StyleSheet.create({
   error: {
     color: "red",
     fontSize: 16,
+  },
+  disabled: {
+    opacity: 0.6,
   },
 });

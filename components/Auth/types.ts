@@ -4,7 +4,10 @@ interface LabubuInfo {
   username: string;
   password: string;
   displayname?: string;
-  image: null | ImagePicker.ImagePickerSuccessResult;
+  //imageUri: null | string;
+  //imageUri: null | ImagePicker.ImagePickerSuccessResult;
+  // imageUri: ImagePicker.ImagePickerAsset[] | null;
+  image: ImagePicker.ImagePickerAsset | null;
 }
 
 interface LabubuSigninInfo {
