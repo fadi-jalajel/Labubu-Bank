@@ -7,6 +7,24 @@ import React from "react";
 import { Image, StyleSheet, Text, View, Pressable } from "react-native";
 import Spinner from "../Loading/Spinner";
 
+const BASE_URL = "https://bank-app-be-eapi-btf5b.ondigitalocean.app";
+
+function extractUserName(username: string | undefined) {
+  if (!username) return { displayName: "Unknown" };
+  const parts = username.split("__");
+  return {
+    userNamePart: parts[0],
+  };
+}
+
+function extractDisplayName(username: string | undefined) {
+  if (!username) return { displayName: "Unknown" };
+  const parts = username.split("__");
+  return {
+    displayNamePart: parts[1] ?? parts[0],
+  };
+}
+
 const Profile = () => {
   const userName = "My Labubu";
   const userImage = "@/assets/labubu-avatars/hope.png";
@@ -22,7 +40,18 @@ const Profile = () => {
     router.dismissTo("/(auth)/signin");
   };
 
-  if (isLoading) return <Spinner size="large" color={"gray"} />;
+  if (isLoading) return <Spinner size="large" color={"#000"} />;
+
+  // Handle nested profile response
+  const currentUser = data?.data || data?.user;
+
+  if (!currentUser) return null;
+
+  const { userNamePart } = extractUserName(currentUser.username);
+  const { displayNamePart } = extractDisplayName(currentUser.username);
+
+  const myImage = `${BASE_URL}/${currentUser.imagePath}`;
+  const myBalance = data?.data.balance;
 
   return (
     <View style={styles.container}>
@@ -33,18 +62,18 @@ const Profile = () => {
         </Pressable>
       </View>
 
+      <Text style={styles.subtitle}>Your Labubu Account</Text>
       {/* PROFILE CARD */}
       <View style={styles.card}>
         <Image
-          source={{ uri: data?.image || userImage }}
+          source={{ uri: myImage || userImage }}
           style={styles.profileImage}
         />
-
-        <Text style={styles.userName}>{data?.username || userName}</Text>
-
-        <Text style={styles.subtitle}>Labubu Account</Text>
-
-        <Text style={styles.quoteText}>{foodQuote}</Text>
+      </View>
+      <View>
+        <Text style={styles.userName}>Hi, {displayNamePart}</Text>
+        <Text style={styles.userName}>{userNamePart}</Text>
+        <Text style={styles.quoteText}>`Your are worth ${myBalance}$`</Text>
       </View>
     </View>
   );

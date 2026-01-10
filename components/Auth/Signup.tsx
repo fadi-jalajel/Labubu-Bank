@@ -86,7 +86,13 @@ const SignupScreen = () => {
     mutationKey: ["signup"],
     mutationFn: signup,
     onSuccess: (data) => {
-      storeToken(data.token);
+      // Token is nested in data.data.token
+      const token = data?.data?.token || data?.token;
+      if (!token) {
+        console.error("❌ No token in response:", data);
+        return;
+      }
+      storeToken(token);
       setIsAuthenticated(true);
       router.navigate("/(protected)/(tabs)/home");
     },

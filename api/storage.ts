@@ -1,10 +1,21 @@
 import * as SecureStore from "expo-secure-store";
 
-const storeToken = async (token: string) => {
+const storeToken = async (token: string | undefined | null) => {
   try {
-    await SecureStore.setItemAsync("token", token);
+    // Ensure token is a string before storing
+    if (!token) {
+      console.log("⚠️ storeToken: No token provided");
+      return;
+    }
+
+    // Convert to string if it's not already (handles edge cases)
+    const tokenString = typeof token === "string" ? token : String(token);
+
+    await SecureStore.setItemAsync("token", tokenString);
+    console.log("✅ Token stored successfully");
   } catch (error) {
     console.log("🚀 ~ storeToken ~ error:", error);
+    throw error; // Re-throw so callers can handle it
   }
 };
 

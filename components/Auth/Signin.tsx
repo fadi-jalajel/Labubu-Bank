@@ -26,7 +26,13 @@ const SignInScreen = () => {
     mutationKey: ["signin"],
     mutationFn: signin,
     onSuccess: async (data) => {
-      storeToken(data.token);
+      // Token is nested in data.data.token
+      const token = data?.data?.token || data?.token;
+      if (!token) {
+        console.error("❌ No token in response:", data);
+        return;
+      }
+      await storeToken(token);
       setIsAuthenticated(true);
       setLabubuCredentials({
         ...labubuCredentials,

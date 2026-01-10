@@ -13,6 +13,7 @@ import { Link } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { getAllUsers } from "@/api/users";
 import { getProfile } from "@/api/profile";
+import Spinner from "@/components/Loading/Spinner";
 
 const { height } = Dimensions.get("window");
 const HERO_HEIGHT = height * 0.65;
@@ -20,7 +21,8 @@ const IMAGE_RATIO = 4 / 5;
 
 const BASE_URL = "https://bank-app-be-eapi-btf5b.ondigitalocean.app";
 
-function decodeUsername(username: string) {
+function decodeUsername(username: string | undefined) {
+  if (!username) return { displayName: "Unknown" };
   const parts = username.split("__");
   return {
     displayName: parts[1] ?? parts[0],
@@ -28,25 +30,45 @@ function decodeUsername(username: string) {
 }
 
 export default function HomeScreen() {
-  const { data: users } = useQuery({
+  const { data: users, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users"],
     queryFn: getAllUsers,
   });
 
-  const { data: theLabubuUser } = useQuery({
+  const { data: theLabubuUser, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["theLabubuUser"],
     queryFn: getProfile,
   });
 
+  //useMemo remembers the result of a calculation so React doesn't redo it on every render unless something important changes.
+
   const { leaderboard, myRank } = useMemo(() => {
     if (!users || !theLabubuUser) return { leaderboard: [], myRank: null };
 
-    const sorted = [...users].sort((a, b) => {
+    // Handle nested response structure - users might be in data.data or data.users
+    const usersArray = Array.isArray(users)
+      ? users
+      : users?.data || users?.users || [];
+
+    // Ensure it's an array before spreading
+    if (!Array.isArray(usersArray)) {
+      console.error("❌ Users is not an array:", users);
+      return { leaderboard: [], myRank: null };
+    }
+
+    // Handle nested profile response - user might be in data.data or data.user
+    const currentUser =
+      theLabubuUser?.data || theLabubuUser?.user || theLabubuUser;
+    const currentUserId = currentUser?.id;
+
+    const sorted = [...usersArray].sort((a, b) => {
       if (b.balance !== a.balance) return b.balance - a.balance;
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
 
-    const rank = sorted.findIndex((u) => u.id === theLabubuUser.id) + 1 || null;
+    const rank = currentUserId
+      ? sorted.findIndex((u) => u.id === currentUserId) + 1
+      : null;
 
     return {
       leaderboard: sorted.slice(0, 10),
@@ -54,10 +76,19 @@ export default function HomeScreen() {
     };
   }, [users, theLabubuUser]);
 
-  if (!theLabubuUser) return null;
+  // Show loading spinner while data is being fetched
+  if (isLoadingUsers || isLoadingProfile) {
+    return <Spinner size="large" color="#000" />;
+  }
 
-  const { displayName } = decodeUsername(theLabubuUser.username);
-  const myImage = `${BASE_URL}/${theLabubuUser.imagePath}`;
+  // Handle nested profile response
+  const currentUser =
+    theLabubuUser?.data || theLabubuUser?.user || theLabubuUser;
+
+  if (!currentUser) return null;
+
+  const { displayName } = decodeUsername(currentUser.username);
+  const myImage = `${BASE_URL}/${currentUser.imagePath}`;
 
   return (
     <View style={styles.container}>
@@ -87,7 +118,7 @@ export default function HomeScreen() {
         <View style={styles.infoBox}>
           <Text style={styles.name}>{displayName}</Text>
           <Text style={styles.balance}>
-            ${theLabubuUser.balance.toLocaleString()}
+            ${currentUser.balance.toLocaleString()}
           </Text>
         </View>
       </View>
@@ -123,6 +154,7 @@ export default function HomeScreen() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
