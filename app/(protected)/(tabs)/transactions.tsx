@@ -1,2 +1,2 @@
-import TransactionHistory from "@/components/Transactions";
-export default TransactionHistory;
+import TransactionsHistory from "@/components/Transactions";
+export default TransactionsHistory;

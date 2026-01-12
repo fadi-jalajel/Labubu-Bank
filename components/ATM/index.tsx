@@ -4,7 +4,7 @@ import React from "react";
 const ATM = () => {
   return (
     <View>
-      <Text>index</Text>
+      <Text>ATM</Text>
     </View>
   );
 };

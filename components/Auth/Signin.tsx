@@ -13,6 +13,7 @@ import { useMutation } from "@tanstack/react-query";
 import { signin } from "@/api/auth";
 import { storeToken } from "@/api/storage";
 import AuthContext from "@/context/AuthContext";
+import { FONTS } from "@/constants/fonts";
 
 const SignInScreen = () => {
   const router = useRouter();
@@ -27,7 +28,7 @@ const SignInScreen = () => {
     mutationFn: signin,
     onSuccess: async (data) => {
       // Token is nested in data.data.token
-      const token = data?.data?.token || data?.token;
+      const token = data?.data?.token;
       if (!token) {
         console.error("❌ No token in response:", data);
         return;
@@ -115,6 +116,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
+    fontFamily: FONTS.bold,
     textAlign: "center",
     marginBottom: 8,
   },
@@ -123,6 +125,7 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginBottom: 32,
+    fontFamily: FONTS.regular,
   },
   input: {
     borderWidth: 1,
@@ -131,6 +134,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 16,
     fontSize: 16,
+    fontFamily: FONTS.regular,
   },
   button: {
     backgroundColor: "#000",
@@ -143,6 +147,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+    fontFamily: FONTS.semiBold,
   },
   footer: {
     flexDirection: "row",
@@ -152,14 +157,17 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: "#666",
+    fontFamily: FONTS.regular,
   },
   link: {
     color: "#000",
     fontWeight: "600",
+    fontFamily: FONTS.semiBold,
   },
   error: {
     color: "red",
     fontSize: 16,
+    fontFamily: FONTS.regular,
   },
   disabled: {
     opacity: 0.6,

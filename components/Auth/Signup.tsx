@@ -17,8 +17,12 @@ import * as ImagePicker from "expo-image-picker";
 import { useMutation } from "@tanstack/react-query";
 import { signup } from "@/api/auth";
 import { storeToken } from "@/api/storage";
+import { FONTS } from "@/constants/fonts";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SignupScreen = () => {
+  const insets = useSafeAreaInsets();
+
   //Initializing state to capture user sign up input
   const [labubuInfo, setLabubuInfo] = useState<LabubuInfo>({
     username: "",
@@ -31,9 +35,6 @@ const SignupScreen = () => {
 
   //global user authentication state
   const { setIsAuthenticated } = useContext(AuthContext);
-
-  // later you will replace this with image picker
-  //   const DEFAULT_IMAGE = "https://placehold.co/300x300/png?text=Labubu";
 
   const requestPermission = async () => {
     const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -66,7 +67,7 @@ const SignupScreen = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images", "videos"],
         allowsEditing: true,
-        aspect: [9, 16],
+        aspect: [4, 5],
         quality: 0.5,
       });
 
@@ -150,7 +151,7 @@ const SignupScreen = () => {
       keyboardVerticalOffset={100}
       style={styles.container}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <Text style={styles.title}>Create Your Labubu 🧸</Text>
         <Text style={styles.subtitle}>Join the Labubu Bank</Text>
 
@@ -230,12 +231,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
+    paddingTop: 0,
+
     justifyContent: "center",
     backgroundColor: "#fff",
   },
   title: {
     fontSize: 28,
     fontWeight: "700",
+    fontFamily: FONTS.bold,
     textAlign: "center",
     marginBottom: 8,
   },
@@ -244,6 +248,7 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginBottom: 24,
+    fontFamily: FONTS.regular,
   },
   avatar: {
     width: 120,
@@ -258,6 +263,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 16,
     fontSize: 16,
+    fontFamily: FONTS.regular,
   },
   button: {
     backgroundColor: "#000",
@@ -273,6 +279,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+    fontFamily: FONTS.semiBold,
   },
   footer: {
     flexDirection: "row",
@@ -282,14 +289,17 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: "#666",
+    fontFamily: FONTS.regular,
   },
   link: {
     color: "#000",
     fontWeight: "600",
+    fontFamily: FONTS.semiBold,
   },
   error: {
     color: "red",
     fontSize: 16,
+    fontFamily: FONTS.regular,
   },
   avatarContainer: {
     alignItems: "center",
@@ -310,11 +320,13 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: "#999",
     fontWeight: "300",
+    fontFamily: FONTS.light,
   },
   avatarPlaceholderSubtext: {
     fontSize: 12,
     color: "#999",
     marginTop: 4,
+    fontFamily: FONTS.regular,
   },
   avatarButton: {
     borderRadius: 60,

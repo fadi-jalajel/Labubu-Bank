@@ -7,6 +7,8 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 const TAB_WIDTH = 80;
 const BAR_HEIGHT = 64;
 const INNER_PADDING = 8;
+const INDICATOR_WIDTH = 50;
+const INDICATOR_HEIGHT = 48;
 
 export default function AnimatedTabBar({
   state,
@@ -14,9 +16,27 @@ export default function AnimatedTabBar({
 }: BottomTabBarProps) {
   const translateX = useRef(new Animated.Value(0)).current;
 
+  //   useEffect(() => {
+  //     // Calculate the center position of each tab (relative to innerRow)
+  //     // Tab center = (state.index * TAB_WIDTH) + (TAB_WIDTH / 2)
+  //     // Indicator left position = Tab center - (INDICATOR_WIDTH / 2)
+  //     const tabCenter = state.index * TAB_WIDTH + TAB_WIDTH / 2;
+  //     const indicatorLeft = tabCenter - INDICATOR_WIDTH / 2;
+  //     Animated.spring(translateX, {
+  //       toValue: indicatorLeft,
+  //       damping: 15,
+  //       stiffness: 120,
+  //       useNativeDriver: true,
+  //     }).start();
+  //   }, [state.index]);
+
   useEffect(() => {
+    const tabCenter = INNER_PADDING + state.index * TAB_WIDTH + TAB_WIDTH / 2;
+
+    const indicatorLeft = tabCenter - INDICATOR_WIDTH / 2;
+
     Animated.spring(translateX, {
-      toValue: state.index * TAB_WIDTH,
+      toValue: indicatorLeft,
       damping: 15,
       stiffness: 120,
       useNativeDriver: true,
@@ -25,8 +45,8 @@ export default function AnimatedTabBar({
 
   const ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
     home: "crown-outline",
-    transactions: "queue-first-in-last-out",
-    atm: "air-filter",
+    transactions: "history",
+    atm: "transfer",
   };
 
   const tabCount = state.routes.length;
@@ -62,7 +82,7 @@ export default function AnimatedTabBar({
                   <MaterialCommunityIcons
                     name={ICONS[route.name]}
                     size={24}
-                    color={isFocused ? "#2ECC71" : "#aaa"}
+                    color={isFocused ? "#2ECC71" : "white"}
                   />
                 </TouchableOpacity>
               );
@@ -80,6 +100,8 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 0,
     right: 0,
+    zIndex: 1000, // Add high zIndex
+    pointerEvents: "box-none",
   },
   centerRow: {
     flexDirection: "row",
@@ -109,9 +131,10 @@ const styles = StyleSheet.create({
   indicator: {
     position: "absolute",
     left: 0,
-    width: TAB_WIDTH,
-    height: 48,
-    borderRadius: 24,
+    top: (BAR_HEIGHT - INDICATOR_HEIGHT) / 2,
+    width: INDICATOR_WIDTH,
+    height: INDICATOR_HEIGHT,
+    borderRadius: INDICATOR_HEIGHT / 2,
     backgroundColor: "#fff",
   },
 });

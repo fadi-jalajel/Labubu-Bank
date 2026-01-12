@@ -3,7 +3,7 @@ import {
   Text,
   StyleSheet,
   Image,
-  FlatList,
+  ScrollView,
   Dimensions,
   Pressable,
 } from "react-native";
@@ -14,6 +14,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { getAllUsers } from "@/api/users";
 import { getProfile } from "@/api/profile";
 import Spinner from "@/components/Loading/Spinner";
+import { FONTS } from "@/constants/fonts";
 
 const { height } = Dimensions.get("window");
 const HERO_HEIGHT = height * 0.65;
@@ -56,12 +57,17 @@ export default function HomeScreen() {
       return { leaderboard: [], myRank: null };
     }
 
+    // Filter to only include users with "__" in username (project accounts)
+    const filteredUsers = usersArray.filter(
+      (user) => user.username && user.username.includes("__")
+    );
+
     // Handle nested profile response - user might be in data.data or data.user
     const currentUser =
       theLabubuUser?.data || theLabubuUser?.user || theLabubuUser;
     const currentUserId = currentUser?.id;
 
-    const sorted = [...usersArray].sort((a, b) => {
+    const sorted = [...filteredUsers].sort((a, b) => {
       if (b.balance !== a.balance) return b.balance - a.balance;
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
@@ -105,52 +111,61 @@ export default function HomeScreen() {
         </Link>
       </View>
 
-      {/* HERO SECTION */}
-      <View style={styles.hero}>
-        {myRank && (
-          <Text style={styles.rankWatermark}>
-            {String(myRank).padStart(2, "0")}
-          </Text>
-        )}
-
-        <Image source={{ uri: myImage }} style={styles.labubuImage} />
-
-        <View style={styles.infoBox}>
-          <Text style={styles.name}>{displayName}</Text>
-          <Text style={styles.balance}>
-            ${currentUser.balance.toLocaleString()}
-          </Text>
-        </View>
-      </View>
-
-      {/* LEADERBOARD */}
-      <FlatList
-        data={leaderboard}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => {
-          const { displayName } = decodeUsername(item.username);
-          return (
-            <View style={styles.row}>
-              <Text style={styles.rowRank}>
-                {String(index + 1).padStart(2, "0")}
-              </Text>
-
-              <Image
-                source={{ uri: `${BASE_URL}/${item.imagePath}` }}
-                style={styles.rowImage}
+      >
+        {/* HERO SECTION */}
+        <View style={styles.hero}>
+          {myRank && (
+            <View style={styles.rankContainer}>
+              <MaterialCommunityIcons
+                name="crown-outline"
+                size={100}
+                color="black"
               />
-
-              <Text style={styles.rowName}>{displayName}</Text>
-
-              <Text style={styles.rowBalance}>
-                ${item.balance.toLocaleString()}
+              <Text style={styles.rankMark}>
+                {String(myRank).padStart(2, "0")}
               </Text>
             </View>
-          );
-        }}
-      />
+          )}
+
+          <Image source={{ uri: myImage }} style={styles.labubuImage} />
+
+          <View style={styles.infoBox}>
+            <Text style={styles.name}>{displayName}</Text>
+            <Text style={styles.balance}>
+              ${currentUser.balance.toLocaleString()}
+            </Text>
+          </View>
+        </View>
+
+        {/* LEADERBOARD */}
+        <View style={styles.list}>
+          {leaderboard.map((item, index) => {
+            const { displayName } = decodeUsername(item.username);
+            return (
+              <View key={item.id} style={styles.row}>
+                <Text style={styles.rowRank}>
+                  {String(index + 1).padStart(2, "0")}
+                </Text>
+
+                <Image
+                  source={{ uri: `${BASE_URL}/${item.imagePath}` }}
+                  style={styles.rowImage}
+                />
+
+                <Text style={styles.rowName}>{displayName}</Text>
+
+                <Text style={styles.rowBalance}>
+                  ${item.balance.toLocaleString()}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -159,6 +174,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
   },
 
   /* HEADER */
@@ -176,18 +199,34 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  rankWatermark: {
+  rankContainer: {
     position: "absolute",
+    top: "18%",
+    marginLeft: "33%",
+    alignItems: "flex-start",
+  },
+
+  rankLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    fontFamily: FONTS.extraBold,
+    color: "grey",
+    marginTop: -22,
+    textAlign: "right",
+  },
+
+  rankMark: {
     fontSize: 180,
     fontWeight: "900",
-    color: "rgba(0,0,0,0.05)",
-    top: "18%",
+    fontFamily: FONTS.extraBold,
+    color: "black",
   },
 
   labubuImage: {
     width: HERO_HEIGHT * IMAGE_RATIO * 0.8,
     height: HERO_HEIGHT * 0.8,
     resizeMode: "contain",
+    marginRight: "40%",
   },
 
   infoBox: {
@@ -200,11 +239,13 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontWeight: "700",
+    fontFamily: FONTS.bold,
   },
 
   balance: {
     fontSize: 18,
     color: "#666",
+    fontFamily: FONTS.regular,
   },
 
   /* LEADERBOARD */
@@ -224,6 +265,7 @@ const styles = StyleSheet.create({
   rowRank: {
     width: 32,
     fontWeight: "700",
+    fontFamily: FONTS.bold,
     color: "#999",
   },
 
@@ -238,9 +280,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: "500",
+    fontFamily: FONTS.medium,
   },
 
   rowBalance: {
     fontWeight: "600",
+    fontFamily: FONTS.semiBold,
   },
 });

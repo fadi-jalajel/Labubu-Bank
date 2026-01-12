@@ -2,10 +2,11 @@ import { LabubuInfo, LabubuSigninInfo } from "@/components/Auth/types";
 import instance from "./index";
 
 const signin = async (labubuCredentialsInfo: LabubuSigninInfo) => {
-  const response = await instance.post("/api/auth/login", {
-    username: labubuCredentialsInfo.username,
-    password: labubuCredentialsInfo.password,
-  });
+  console.log("🚀 ~ signin ~ labubuCredentialsInfo:", labubuCredentialsInfo);
+  const response = await instance.post(
+    "/api/auth/login",
+    labubuCredentialsInfo
+  );
   return response.data;
 };
 

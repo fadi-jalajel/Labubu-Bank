@@ -1,34 +1,99 @@
-import { View, Text, StyleSheet, FlatList, RefreshControl } from "react-native";
-import React from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  TextInput,
+  ScrollView,
+  FlatList,
+} from "react-native";
+import React, { useState } from "react";
+import { FONTS } from "@/constants/fonts";
+import { LinearGradient } from "expo-linear-gradient";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useQuery } from "@tanstack/react-query";
 import { getMyTransactions } from "@/api/transactions";
-import Spinner from "@/components/Loading/Spinner";
+import { getProfile } from "@/api/profile";
 
 interface Transaction {
-  id: string;
+  _id: string;
   type: "DEPOSIT" | "WITHDRAW" | "TRANSFER";
   amount: number;
   createdAt: string;
-  toUserID?: string;
-  fromUserID?: string;
+  fromUserId?: string;
+  toUserId?: string;
 }
 
-const TransactionHistory = () => {
-  const {
-    data: transactions,
-    isLoading,
-    isError,
-    refetch,
-    isRefetching,
-  } = useQuery({
+const TransactionsHistory = () => {
+  const [selectedFilter, setSelectedFilter] = useState<
+    "ALL" | "DEPOSIT" | "WITHDRAW" | "TRANSFER"
+  >("ALL");
+  const [searchDate, setSearchDate] = useState("");
+  const [searchAmount, setSearchAmount] = useState("");
+
+  const { data: profileData } = useQuery({
+    queryKey: ["profile"],
+    queryFn: getProfile,
+  });
+
+  const { data: transactionsData } = useQuery({
     queryKey: ["myTransactions"],
     queryFn: getMyTransactions,
   });
 
-  // Handle nested response structure
-  const transactionsArray: Transaction[] = Array.isArray(transactions)
-    ? transactions
-    : transactions?.data || transactions?.transactions || [];
+  // Get net worth from profile
+  const netWorth = profileData?.data?.balance || profileData?.balance || 0;
+  const lastUpdated = new Date().toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  // Handle transactions data
+  const transactionsArray: Transaction[] = Array.isArray(transactionsData)
+    ? transactionsData
+    : transactionsData?.data || [];
+
+  // Filter transactions
+  const filteredTransactions = transactionsArray.filter((transaction) => {
+    // Filter by type
+    if (selectedFilter !== "ALL" && transaction.type !== selectedFilter) {
+      return false;
+    }
+
+    // Filter by date
+    if (searchDate) {
+      const transactionDate = new Date(
+        transaction.createdAt
+      ).toLocaleDateString();
+      const searchDateFormatted = new Date(searchDate).toLocaleDateString();
+      if (transactionDate !== searchDateFormatted) {
+        return false;
+      }
+    }
+
+    // Filter by amount
+    if (searchAmount) {
+      const searchAmountNum = parseFloat(searchAmount);
+      if (isNaN(searchAmountNum) || transaction.amount !== searchAmountNum) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  const handleRefresh = () => {
+    // Refresh logic here
+  };
+
+  const handleClear = () => {
+    setSearchDate("");
+    setSearchAmount("");
+    setSelectedFilter("ALL");
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -61,160 +126,361 @@ const TransactionHistory = () => {
     }
   };
 
-  const getTransactionColor = (type: string) => {
-    switch (type) {
-      case "DEPOSIT":
-        return "#22c55e"; // green
-      case "WITHDRAW":
-      case "TRANSFER":
-        return "#ef4444"; // red
-      default:
-        return "#000";
-    }
-  };
-
-  const renderTransaction = ({ item }: { item: Transaction }) => {
-    const color = getTransactionColor(item.type);
-    const typeLabel = getTransactionTypeLabel(item.type);
-
+  const renderTransaction = ({
+    item,
+    index,
+  }: {
+    item: Transaction;
+    index: number;
+  }) => {
     return (
-      <View style={styles.transactionItem}>
-        <View style={styles.transactionLeft}>
-          <Text style={styles.transactionType}>{typeLabel}</Text>
+      <View>
+        <View style={styles.transactionCard}>
+          <View style={styles.transactionHeader}>
+            <Text style={styles.transactionType}>
+              {getTransactionTypeLabel(item.type)}
+            </Text>
+            <Text style={styles.transactionAmount}>
+              {formatAmount(item.amount)}
+            </Text>
+          </View>
           <Text style={styles.transactionDate}>
             {formatDate(item.createdAt)}
           </Text>
         </View>
-        <Text style={[styles.transactionAmount, { color }]}>
-          {item.type === "DEPOSIT" ? "+" : "-"}
-          {formatAmount(item.amount)}
-        </Text>
+        {index < filteredTransactions.length - 1 && (
+          <View style={styles.breaker} />
+        )}
       </View>
     );
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>No transactions yet</Text>
-      <Text style={styles.emptySubtext}>
-        Your transaction history will appear here
-      </Text>
-    </View>
-  );
-
-  if (isLoading) {
-    return <Spinner size="large" color="#000" />;
-  }
-
-  if (isError) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Failed to load transactions</Text>
-        <Text style={styles.errorSubtext}>Please try again later</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={transactionsArray}
-        keyExtractor={(item) =>
-          item.id || `transaction-${item.createdAt}-${item.amount}`
-        }
-        renderItem={renderTransaction}
-        contentContainerStyle={
-          transactionsArray.length === 0
-            ? styles.emptyListContainer
-            : styles.listContainer
-        }
-        ListEmptyComponent={renderEmptyState}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            tintColor="#000"
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Credit Card */}
+      <View style={styles.cardContainer}>
+        <LinearGradient
+          colors={["#FFB6C1", "#98FB98", "#FFFFFF"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.creditCard}
+        >
+          <Text style={styles.cardTitle}>Your Labubu's Networth</Text>
+          <Text style={styles.cardAmount}>{formatAmount(netWorth)}</Text>
+        </LinearGradient>
+      </View>
+
+      {/* Last Updated with Refresh */}
+      <View style={styles.lastUpdatedContainer}>
+        <Text style={styles.lastUpdatedText}>as of {lastUpdated}</Text>
+        <Pressable style={styles.refreshButton} onPress={handleRefresh}>
+          <MaterialCommunityIcons name="refresh" size={18} color="#666" />
+        </Pressable>
+      </View>
+
+      {/* Search Box Area */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchRow}>
+          <View style={styles.searchInputContainer}>
+            <MaterialCommunityIcons
+              name="calendar"
+              size={20}
+              color="#999"
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by date"
+              placeholderTextColor="#999"
+              value={searchDate}
+              onChangeText={setSearchDate}
+            />
+          </View>
+          <View style={styles.searchInputContainer}>
+            <MaterialCommunityIcons
+              name="currency-usd"
+              size={20}
+              color="#999"
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by amount"
+              placeholderTextColor="#999"
+              value={searchAmount}
+              onChangeText={setSearchAmount}
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
+        <Pressable style={styles.clearButton} onPress={handleClear}>
+          <Text style={styles.clearButtonText}>Clear</Text>
+        </Pressable>
+      </View>
+
+      {/* Filter Buttons */}
+      <View style={styles.filterContainer}>
+        <Pressable
+          style={[
+            styles.filterButton,
+            selectedFilter === "ALL" && styles.filterButtonActive,
+          ]}
+          onPress={() => setSelectedFilter("ALL")}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              selectedFilter === "ALL" && styles.filterButtonTextActive,
+            ]}
+          >
+            All
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.filterButton,
+            selectedFilter === "DEPOSIT" && styles.filterButtonActive,
+          ]}
+          onPress={() => setSelectedFilter("DEPOSIT")}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              selectedFilter === "DEPOSIT" && styles.filterButtonTextActive,
+            ]}
+          >
+            Deposits
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.filterButton,
+            selectedFilter === "WITHDRAW" && styles.filterButtonActive,
+          ]}
+          onPress={() => setSelectedFilter("WITHDRAW")}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              selectedFilter === "WITHDRAW" && styles.filterButtonTextActive,
+            ]}
+          >
+            Withdrawals
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.filterButton,
+            selectedFilter === "TRANSFER" && styles.filterButtonActive,
+          ]}
+          onPress={() => setSelectedFilter("TRANSFER")}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              selectedFilter === "TRANSFER" && styles.filterButtonTextActive,
+            ]}
+          >
+            Transfers
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* Transactions List */}
+      <View style={styles.transactionsContainer}>
+        <FlatList
+          data={filteredTransactions}
+          keyExtractor={(item) => item._id}
+          renderItem={renderTransaction}
+          scrollEnabled={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No transactions found</Text>
+            </View>
+          }
+        />
+      </View>
+    </ScrollView>
   );
 };
 
-export default TransactionHistory;
+export default TransactionsHistory;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 100,
   },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 32,
+  // Credit Card Styles
+  cardContainer: {
+    marginBottom: 16,
   },
-  emptyListContainer: {
+  creditCard: {
+    width: "100%",
+    height: 200,
+    borderRadius: 20,
+    padding: 24,
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  cardTitle: {
+    fontSize: 16,
+    color: "#333",
+    fontFamily: FONTS.medium,
+    marginBottom: 8,
+  },
+  cardAmount: {
+    fontSize: 42,
+    fontWeight: "700",
+    color: "#000",
+    fontFamily: FONTS.bold,
+  },
+  // Last Updated Styles
+  lastUpdatedContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+    gap: 8,
+  },
+  lastUpdatedText: {
+    fontSize: 12,
+    color: "#666",
+    fontFamily: FONTS.regular,
+  },
+  refreshButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#f5f5f5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // Search Container Styles
+  searchContainer: {
+    marginBottom: 20,
+  },
+  searchRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+  searchInputContainer: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f8f8f8",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
-  transactionItem: {
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 44,
+    fontSize: 14,
+    color: "#000",
+    fontFamily: FONTS.regular,
+  },
+  clearButton: {
+    alignSelf: "flex-end",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+  },
+  clearButtonText: {
+    fontSize: 14,
+    color: "#666",
+    fontFamily: FONTS.semiBold,
+  },
+  // Filter Buttons Styles
+  filterContainer: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 24,
+  },
+  filterButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 50,
+    backgroundColor: "#f5f5f5",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  filterButtonActive: {
+    backgroundColor: "#000",
+    borderColor: "#000",
+  },
+  filterButtonText: {
+    fontSize: 10,
+    color: "#666",
+    fontFamily: FONTS.semiBold,
+  },
+  filterButtonTextActive: {
+    color: "#fff",
+  },
+  // Transactions Container
+  transactionsContainer: {
+    marginBottom: 32,
+  },
+  transactionCard: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  transactionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-  },
-  transactionLeft: {
-    flex: 1,
+    marginBottom: 8,
   },
   transactionType: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 4,
     color: "#000",
-  },
-  transactionDate: {
-    fontSize: 14,
-    color: "#666",
+    fontFamily: FONTS.semiBold,
   },
   transactionAmount: {
     fontSize: 18,
     fontWeight: "700",
+    color: "#000",
+    fontFamily: FONTS.bold,
+  },
+  transactionDate: {
+    fontSize: 13,
+    color: "#666",
+    fontFamily: FONTS.regular,
+  },
+  breaker: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginVertical: 8,
   },
   emptyContainer: {
-    flex: 1,
+    paddingVertical: 40,
     alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
   },
   emptyText: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-  },
-  errorContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#ef4444",
-    marginBottom: 8,
-  },
-  errorSubtext: {
     fontSize: 14,
-    color: "#666",
-    textAlign: "center",
+    color: "#999",
+    fontFamily: FONTS.regular,
   },
 });
