@@ -156,7 +156,11 @@ const TransactionsHistory = () => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 100 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Credit Card */}
       <View style={styles.cardContainer}>
         <LinearGradient
@@ -312,7 +316,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 100,
+    // paddingBottom: 100,
   },
   // Credit Card Styles
   cardContainer: {

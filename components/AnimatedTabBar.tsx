@@ -13,26 +13,12 @@ const INDICATOR_HEIGHT = 48;
 export default function AnimatedTabBar({
   state,
   navigation,
-}: BottomTabBarProps) {
+  bottomOffset = 16,
+}: BottomTabBarProps & { bottomOffset?: number }) {
   const translateX = useRef(new Animated.Value(0)).current;
-
-  //   useEffect(() => {
-  //     // Calculate the center position of each tab (relative to innerRow)
-  //     // Tab center = (state.index * TAB_WIDTH) + (TAB_WIDTH / 2)
-  //     // Indicator left position = Tab center - (INDICATOR_WIDTH / 2)
-  //     const tabCenter = state.index * TAB_WIDTH + TAB_WIDTH / 2;
-  //     const indicatorLeft = tabCenter - INDICATOR_WIDTH / 2;
-  //     Animated.spring(translateX, {
-  //       toValue: indicatorLeft,
-  //       damping: 15,
-  //       stiffness: 120,
-  //       useNativeDriver: true,
-  //     }).start();
-  //   }, [state.index]);
 
   useEffect(() => {
     const tabCenter = INNER_PADDING + state.index * TAB_WIDTH + TAB_WIDTH / 2;
-
     const indicatorLeft = tabCenter - INDICATOR_WIDTH / 2;
 
     Animated.spring(translateX, {
@@ -41,19 +27,24 @@ export default function AnimatedTabBar({
       stiffness: 120,
       useNativeDriver: true,
     }).start();
-  }, [state.index]);
+  }, [state.index, translateX]);
 
   const ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
     home: "crown-outline",
     transactions: "history",
     atm: "transfer",
+    profile: "account-circle-outline", // (optional) if you have profile
   };
 
   const tabCount = state.routes.length;
 
   return (
-    <View style={styles.absoluteWrapper}>
-      <View style={styles.centerRow}>
+    // <View style={styles.absoluteWrapper} pointerEvents="box-none">
+    <View
+      style={[styles.absoluteWrapper, { bottom: bottomOffset }]}
+      pointerEvents="box-none"
+    >
+      <View style={styles.centerRow} pointerEvents="box-none">
         <BlurView
           intensity={40}
           tint="dark"
@@ -61,16 +52,17 @@ export default function AnimatedTabBar({
             styles.container,
             { width: TAB_WIDTH * tabCount + INNER_PADDING * 2 },
           ]}
+          pointerEvents="box-none"
         >
-          {/* INNER ROW (shared coordinate space) */}
-          <View style={styles.innerRow}>
-            {/* Active indicator */}
+          <View style={styles.innerRow} pointerEvents="box-none">
+            {/* Active indicator - never steal touches */}
             <Animated.View
+              pointerEvents="none"
               style={[styles.indicator, { transform: [{ translateX }] }]}
             />
 
-            {state.routes.map((route) => {
-              const isFocused = state.routes[state.index].key === route.key;
+            {state.routes.map((route, index) => {
+              const isFocused = state.index === index;
 
               return (
                 <TouchableOpacity
@@ -80,7 +72,7 @@ export default function AnimatedTabBar({
                   style={styles.tab}
                 >
                   <MaterialCommunityIcons
-                    name={ICONS[route.name]}
+                    name={ICONS[route.name] ?? "circle-outline"}
                     size={24}
                     color={isFocused ? "#2ECC71" : "white"}
                   />
@@ -100,8 +92,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 0,
     right: 0,
-    zIndex: 1000, // Add high zIndex
-    pointerEvents: "box-none",
+    zIndex: 1000,
   },
   centerRow: {
     flexDirection: "row",
@@ -120,13 +111,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: INNER_PADDING,
     alignItems: "center",
+    height: BAR_HEIGHT,
   },
   tab: {
     width: TAB_WIDTH,
     height: BAR_HEIGHT,
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 1,
   },
   indicator: {
     position: "absolute",
