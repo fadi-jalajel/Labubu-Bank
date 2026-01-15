@@ -9,11 +9,12 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import { FONTS } from "@/constants/fonts";
-import { LinearGradient } from "expo-linear-gradient";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useQuery } from "@tanstack/react-query";
 import { getMyTransactions } from "@/api/transactions";
-import { getProfile } from "@/api/profile";
+
+// Page title - change this text to update the title
+const PAGE_TITLE = "Transactions";
 
 interface Transaction {
   _id: string;
@@ -31,24 +32,9 @@ const TransactionsHistory = () => {
   const [searchDate, setSearchDate] = useState("");
   const [searchAmount, setSearchAmount] = useState("");
 
-  const { data: profileData } = useQuery({
-    queryKey: ["profile"],
-    queryFn: getProfile,
-  });
-
   const { data: transactionsData } = useQuery({
     queryKey: ["myTransactions"],
     queryFn: getMyTransactions,
-  });
-
-  // Get net worth from profile
-  const netWorth = profileData?.data?.balance || profileData?.balance || 0;
-  const lastUpdated = new Date().toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 
   // Handle transactions data
@@ -84,10 +70,6 @@ const TransactionsHistory = () => {
 
     return true;
   });
-
-  const handleRefresh = () => {
-    // Refresh logic here
-  };
 
   const handleClear = () => {
     setSearchDate("");
@@ -161,26 +143,8 @@ const TransactionsHistory = () => {
       contentContainerStyle={{ paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Credit Card */}
-      <View style={styles.cardContainer}>
-        <LinearGradient
-          colors={["#FFB6C1", "#98FB98", "#FFFFFF"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.creditCard}
-        >
-          <Text style={styles.cardTitle}>Your Labubu's Networth</Text>
-          <Text style={styles.cardAmount}>{formatAmount(netWorth)}</Text>
-        </LinearGradient>
-      </View>
-
-      {/* Last Updated with Refresh */}
-      <View style={styles.lastUpdatedContainer}>
-        <Text style={styles.lastUpdatedText}>as of {lastUpdated}</Text>
-        <Pressable style={styles.refreshButton} onPress={handleRefresh}>
-          <MaterialCommunityIcons name="refresh" size={18} color="#666" />
-        </Pressable>
-      </View>
+      {/* Page Title */}
+      <Text style={styles.pageTitle}>{PAGE_TITLE}</Text>
 
       {/* Search Box Area */}
       <View style={styles.searchContainer}>
@@ -316,59 +280,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 20,
     paddingTop: 20,
+    marginTop: 20,
     // paddingBottom: 100,
   },
-  // Credit Card Styles
-  cardContainer: {
-    marginBottom: 16,
-  },
-  creditCard: {
-    width: "100%",
-    height: 200,
-    borderRadius: 20,
-    padding: 24,
-    justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  cardTitle: {
-    fontSize: 16,
-    color: "#333",
-    fontFamily: FONTS.medium,
-    marginBottom: 8,
-  },
-  cardAmount: {
-    fontSize: 42,
+  pageTitle: {
+    fontSize: 36,
     fontWeight: "700",
     color: "#000",
     fontFamily: FONTS.bold,
-  },
-  // Last Updated Styles
-  lastUpdatedContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: 24,
-    gap: 8,
-  },
-  lastUpdatedText: {
-    fontSize: 12,
-    color: "#666",
-    fontFamily: FONTS.regular,
-  },
-  refreshButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#f5f5f5",
-    alignItems: "center",
-    justifyContent: "center",
+    paddingTop: 20,
   },
   // Search Container Styles
   searchContainer: {

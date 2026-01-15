@@ -118,20 +118,21 @@ export default function HomeScreen() {
       >
         {/* HERO SECTION */}
         <View style={styles.hero}>
-          {myRank && (
-            <View style={styles.rankContainer}>
-              <MaterialCommunityIcons
-                name="crown-outline"
-                size={100}
-                color="black"
-              />
-              <Text style={styles.rankMark}>
-                {String(myRank).padStart(2, "0")}
-              </Text>
-            </View>
-          )}
-
-          <Image source={{ uri: myImage }} style={styles.labubuImage} />
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: myImage }} style={styles.labubuImage} />
+            {myRank && (
+              <View style={styles.rankContainer}>
+                <MaterialCommunityIcons
+                  name="crown-outline"
+                  size={100}
+                  color="black"
+                />
+                <Text style={styles.rankMark}>
+                  {String(myRank).padStart(2, "0")}
+                </Text>
+              </View>
+            )}
+          </View>
 
           <View style={styles.infoBox}>
             <Text style={styles.name}>{displayName}</Text>
@@ -199,11 +200,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  imageContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 20,
+  },
+
   rankContainer: {
-    position: "absolute",
-    top: "18%",
-    marginLeft: "33%",
-    alignItems: "flex-start",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   rankLabel: {
@@ -216,17 +222,16 @@ const styles = StyleSheet.create({
   },
 
   rankMark: {
-    fontSize: 180,
+    fontSize: 80,
     fontWeight: "900",
     fontFamily: FONTS.extraBold,
     color: "black",
   },
 
   labubuImage: {
-    width: HERO_HEIGHT * IMAGE_RATIO * 0.8,
+    width: HERO_HEIGHT * IMAGE_RATIO * 0.5,
     height: HERO_HEIGHT * 0.8,
     resizeMode: "contain",
-    marginRight: "40%",
   },
 
   infoBox: {
